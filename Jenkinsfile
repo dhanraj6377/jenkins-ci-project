@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_CREDS = credentials('dockerhub-credentials') // Configured in Jenkins
         // IMPORTANT: Replace 'your-dockerhub-user' with your actual DockerHub username!
-        IMAGE_NAME = "your-dockerhub-user/account-service" 
+        IMAGE_NAME = "dhanraj6377/jenkins-ci-project" 
         IMAGE_TAG = "${env.BUILD_ID}"
     }
 
@@ -22,7 +22,7 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/sqshq/piggymetrics.git'
+                git branch: 'master', url: 'https://github.com/dhanraj6377/jenkins-ci-project.git'
             }
         }
 
