@@ -5,7 +5,7 @@ pipeline {
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
         DOCKER_CREDS = credentials('dockerhub-credentials') // Configured in Jenkins
         // IMPORTANT: Replace 'your-dockerhub-user' with your actual DockerHub username!
-        IMAGE_NAME = "dhanraj6377/jenkins-ci-project" 
+        IMAGE_NAME = "ghcr.io/dhanraj6377/jenkins-ci-project" 
         IMAGE_TAG = "${env.BUILD_ID}"
     }
 
