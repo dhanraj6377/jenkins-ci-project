@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: account-service
-        image: your-dockerhub-user/account-service:IMAGE_TAG_PLACEHOLDER
+        image: dhanraj6377/jenkins-ci-project:IMAGE_TAG_PLACEHOLDER
         ports:
         - containerPort: 8080
         env:
