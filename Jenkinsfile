@@ -3,14 +3,23 @@ pipeline {
     
     environment {
         DOCKER_CREDS = credentials('dockerhub-credentials') // Configured in Jenkins
-        IMAGE_NAME = "your-dockerhub-user/account-service"
+        // IMPORTANT: Replace 'your-dockerhub-user' with your actual DockerHub username!
+        IMAGE_NAME = "your-dockerhub-user/account-service" 
         IMAGE_TAG = "${env.BUILD_ID}"
-        // Dynamically find which environment is currently active
-        ACTIVE_ENV = sh(script: "kubectl get svc account-service -o=jsonpath='{.spec.selector.version}'", returnStdout: true).trim()
-        TARGET_ENV = ACTIVE_ENV == "blue" ? "green" : "blue"
     }
 
     stages {
+        stage('Determine Environment') {
+            steps {
+                script {
+                    // We use a script block to safely run Groovy logic and assign dynamic variables
+                    env.ACTIVE_ENV = sh(script: "kubectl get svc account-service -o=jsonpath='{.spec.selector.version}'", returnStdout: true).trim()
+                    env.TARGET_ENV = env.ACTIVE_ENV == "blue" ? "green" : "blue"
+                    echo "Currently Active: ${env.ACTIVE_ENV} | Target for Deployment: ${env.TARGET_ENV}"
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 git branch: 'master', url: 'https://github.com/sqshq/piggymetrics.git'
@@ -35,23 +44,24 @@ pipeline {
 
         stage('Deploy to Inactive Environment') {
             steps {
-                echo "Current Active Env: ${ACTIVE_ENV}. Deploying to: ${TARGET_ENV}"
-                // Replace placeholder in YAML with actual built tag
-                sh "sed -i 's|IMAGE_TAG_PLACEHOLDER|${IMAGE_TAG}|g' k8s/services/account-service-${TARGET_ENV}.yaml"
+                echo "Current Active Env: ${env.ACTIVE_ENV}. Deploying to: ${env.TARGET_ENV}"
+                
+                // Note: The extra '' after -i is required for macOS compatibility!
+                sh "sed -i '' 's|IMAGE_TAG_PLACEHOLDER|${IMAGE_TAG}|g' k8s/services/account-service-${env.TARGET_ENV}.yaml"
                 
                 // Apply the deployment to the cluster
-                sh "kubectl apply -f k8s/services/account-service-${TARGET_ENV}.yaml"
+                sh "kubectl apply -f k8s/services/account-service-${env.TARGET_ENV}.yaml"
                 
                 // Wait for the new pods to be fully ready before proceeding
-                sh "kubectl rollout status deployment/account-service-${TARGET_ENV} --timeout=120s"
+                sh "kubectl rollout status deployment/account-service-${env.TARGET_ENV} --timeout=120s"
             }
         }
 
         stage('Switch Traffic (Blue-Green)') {
             steps {
-                echo "Switching live traffic to ${TARGET_ENV} environment..."
+                echo "Switching live traffic to ${env.TARGET_ENV} environment..."
                 // Patch the Kubernetes service to route to the new environment
-                sh "kubectl patch service account-service -p '{\"spec\":{\"selector\":{\"version\":\"${TARGET_ENV}\"}}}'"
+                sh "kubectl patch service account-service -p '{\"spec\":{\"selector\":{\"version\":\"${env.TARGET_ENV}\"}}}'"
             }
         }
     }
@@ -59,13 +69,11 @@ pipeline {
     post {
         failure {
             echo "Pipeline failed! Initiating safety rollback."
-            echo "Ensuring traffic remains on or is rolled back to ${ACTIVE_ENV}..."
-            sh "kubectl patch service account-service -p '{\"spec\":{\"selector\":{\"version\":\"${ACTIVE_ENV}\"}}}'"
+            echo "Ensuring traffic remains on or is rolled back to ${env.ACTIVE_ENV}..."
+            sh "kubectl patch service account-service -p '{\"spec\":{\"selector\":{\"version\":\"${env.ACTIVE_ENV}\"}}}'"
         }
         success {
-            echo "Deployment successful. Traffic is now live on ${TARGET_ENV}."
-            // Optional: Scale down the old deployment to save cluster resources
-            // sh "kubectl scale deployment account-service-${ACTIVE_ENV} --replicas=0"
+            echo "Deployment successful. Traffic is now live on ${env.TARGET_ENV}."
         }
     }
 }
