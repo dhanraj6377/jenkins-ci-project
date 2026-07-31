@@ -38,7 +38,7 @@ pipeline {
             steps {
                 dir('account-service') {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                    sh "echo \$DOCKER_CREDS_PSW | docker login -u \$DOCKER_CREDS_USR --password-stdin"
+                    sh "echo \$DOCKER_CREDS_PSW | docker login ghcr.io -u \$DOCKER_CREDS_USR --password-stdin"
                     sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
