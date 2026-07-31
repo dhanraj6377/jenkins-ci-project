@@ -29,7 +29,8 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests -U'
+                echo "Building PiggyMetrics using Java 8 via Docker to prevent version mismatch..."
+                sh 'docker run --rm -v "$(pwd)":/app -w /app maven:3.8.6-openjdk-8 mvn clean package -DskipTests'
             }
         }
 
