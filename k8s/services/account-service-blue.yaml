@@ -18,7 +18,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: account-service
-        image: dhanraj6377/jenkins-ci-project:IMAGE_TAG_PLACEHOLDER
+        image: ghcr.io/dhanraj6377/jenkins-ci-project:IMAGE_TAG_PLACEHOLDER
         ports:
         - containerPort: 8080
         env:
