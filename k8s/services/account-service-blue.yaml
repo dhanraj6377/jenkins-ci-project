@@ -14,11 +14,11 @@ spec:
         app: account-service
         version: blue
     spec:
+      imagePullSecrets:
+      - name: ghcr-secret
       containers:
       - name: account-service
         image: dhanraj6377/jenkins-ci-project:IMAGE_TAG_PLACEHOLDER
-        imagePullSecrets:
-          - name:  ghcr-secret
         ports:
         - containerPort: 8080
         env:
